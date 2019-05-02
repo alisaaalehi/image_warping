@@ -7,7 +7,6 @@
 # Date: 6th Aug 2016
 # ==============================
 """
-import png
 import numpy as np
 import matplotlib.colors as cl
 import matplotlib.pyplot as plt
@@ -122,29 +121,6 @@ def read_flow(filename):
         data2d = np.resize(data2d, (h, w, 2))
     f.close()
     return data2d
-
-
-def read_flow_png(flow_file):
-    """
-    Read optical flow from KITTI .png file
-    :param flow_file: name of the flow file
-    :return: optical flow data in matrix
-    """
-    flow_object = png.Reader(filename=flow_file)
-    flow_direct = flow_object.asDirect()
-    flow_data = list(flow_direct[2])
-    (w, h) = flow_direct[3]['size']
-    flow = np.zeros((h, w, 3), dtype=np.float64)
-    for i in range(len(flow_data)):
-        flow[i, :, 0] = flow_data[i][0::3]
-        flow[i, :, 1] = flow_data[i][1::3]
-        flow[i, :, 2] = flow_data[i][2::3]
-
-    invalid_idx = (flow[:, :, 2] == 0)
-    flow[:, :, 0:2] = (flow[:, :, 0:2] - 2 ** 15) / 64.0
-    flow[invalid_idx, 0] = 0
-    flow[invalid_idx, 1] = 0
-    return flow
 
 
 def write_flow(flow, filename):
@@ -324,52 +300,6 @@ def evaluate_flow(gt_flow, pred_flow):
 
 """
 ==============
-Disparity Section
-==============
-"""
-
-
-def read_disp_png(file_name):
-    """
-    Read optical flow from KITTI .png file
-    :param file_name: name of the flow file
-    :return: optical flow data in matrix
-    """
-    image_object = png.Reader(filename=file_name)
-    image_direct = image_object.asDirect()
-    image_data = list(image_direct[2])
-    (w, h) = image_direct[3]['size']
-    channel = len(image_data[0]) / w
-    flow = np.zeros((h, w, channel), dtype=np.uint16)
-    for i in range(len(image_data)):
-        for j in range(channel):
-            flow[i, :, j] = image_data[i][j::channel]
-    return flow[:, :, 0] / 256
-
-
-def disp_to_flowfile(disp, filename):
-    """
-    Read KITTI disparity file in png format
-    :param disp: disparity matrix
-    :param filename: the flow file name to save
-    :return: None
-    """
-    f = open(filename, 'wb')
-    magic = np.array([202021.25], dtype=np.float32)
-    (height, width) = disp.shape[0:2]
-    w = np.array([width], dtype=np.int32)
-    h = np.array([height], dtype=np.int32)
-    empty_map = np.zeros((height, width), dtype=np.float32)
-    data = np.dstack((disp, empty_map))
-    magic.tofile(f)
-    w.tofile(f)
-    h.tofile(f)
-    data.tofile(f)
-    f.close()
-
-
-"""
-==============
 Image Section
 ==============
 """
@@ -386,7 +316,7 @@ def read_image(filename):
     return im
 
 
-def warp_image(im, flow):
+def warp_image_python(im, flow):
     """
     Use optical flow to warp image to the next
     :param im: image to warp
