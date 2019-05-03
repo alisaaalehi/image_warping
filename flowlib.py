@@ -1,4 +1,25 @@
 #!/usr/bin/python
+
+def mean_squared_error(image_a, image_b):
+    """
+    Returns Mean Squared Error between two input images
+    If images are RGB, average of MSE for three channels returned
+    """
+    assert image_a.shape == image_b.shape,\
+        "Input images should be in same shape"
+
+    diff_squared = (image_a.astype("float") - image_b.astype("float")) ** 2
+
+    # sum over first and second channel (if RGB, mse will have 3 values)
+    mse = np.sum(diff_squared, axis=(0, 1))
+
+    number_of_pixels = float(image_a.shape[0]) * image_a.shape[1]
+    mse /= number_of_pixels
+    mse = np.mean(mse)  # take mean in case input images are RGB
+
+    return mse
+
+
 """
 # ==============================
 # flowlib.py
